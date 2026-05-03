@@ -1,9 +1,9 @@
 package service
 
 import (
+	"cmp"
 	"healthgo/backend/domain"
 	"healthgo/backend/repository"
-	"maps"
 	"slices"
 	"time"
 )
@@ -26,16 +26,25 @@ func (s *MeasurementService) GetSeries(deviceID string, gas domain.GasType, star
 		return nil, err
 	}
 
-	// Agrupar por minuto
+	groups := s.groupByMinute(measurements)
+	result := s.calculateAverages(groups)
+	s.sortByTimestamp(result)
+
+	return result, nil
+}
+
+func (s *MeasurementService) groupByMinute(measurements []domain.Measurement) map[time.Time][]float64 {
 	groups := make(map[time.Time][]float64)
 	for _, m := range measurements {
 		minute := m.Timestamp.Truncate(time.Minute)
 		groups[minute] = append(groups[minute], m.ValuePPM)
 	}
+	return groups
+}
 
+func (s *MeasurementService) calculateAverages(groups map[time.Time][]float64) []domain.SeriesData {
 	result := make([]domain.SeriesData, 0, len(groups))
-	for minute := range maps.Keys(groups) {
-		values := groups[minute]
+	for minute, values := range groups {
 		sum := 0.0
 		for _, v := range values {
 			sum += v
@@ -45,19 +54,13 @@ func (s *MeasurementService) GetSeries(deviceID string, gas domain.GasType, star
 			ValuePPM:  sum / float64(len(values)),
 		})
 	}
+	return result
+}
 
-	// Ordenar por timestamp
-	slices.SortFunc(result, func(a, b domain.SeriesData) int {
-		if a.Timestamp.Before(b.Timestamp) {
-			return -1
-		}
-		if a.Timestamp.After(b.Timestamp) {
-			return 1
-		}
-		return 0
+func (s *MeasurementService) sortByTimestamp(data []domain.SeriesData) {
+	slices.SortFunc(data, func(a, b domain.SeriesData) int {
+		return cmp.Compare(a.Timestamp.UnixNano(), b.Timestamp.UnixNano())
 	})
-
-	return result, nil
 }
 
 func (s *MeasurementService) GetDeviceHealth(deviceID string) (*domain.DeviceHealth, error) {
@@ -80,7 +83,7 @@ func (s *MeasurementService) GetDeviceHealth(deviceID string) (*domain.DeviceHea
 	}
 
 	if last != nil {
-		health.IsStale = now.Sub(last.Timestamp) > 5*time.Minute
+		health.IsStale = time.Since(last.Timestamp) > 5*time.Minute
 	} else {
 		health.IsStale = true
 	}

@@ -6,12 +6,14 @@ Este serviço é responsável por receber e processar dados de telemetria de gas
 
 O serviço pode ser executado de duas formas principais:
 
-### 1. Docker Compose (Recomendado)
-A forma mais simples de subir o ambiente completo (Backend + Frontend) é usando o Docker Compose na raiz do projeto:
+### 1. Backend via Docker (Individual)
+Caso queira subir apenas o backend utilizando o Dockerfile próprio:
 ```bash
-docker-compose up --build
+cd backend
+docker build -t healthgo-backend .
+docker run -p 8080:8080 healthgo-backend
 ```
-O Backend estará disponível em `http://localhost:8080` e o Frontend em `http://localhost:3000`.
+O Backend estará disponível em `http://localhost:8080`
 
 ### 2. Manualmente (Go local)
 Na pasta `backend`, execute:
@@ -19,17 +21,28 @@ Na pasta `backend`, execute:
 go run main.go
 ```
 
+### 3. Frontend via Docker (Individual)
+Caso queira subir o frontend (teste mais visual dos endpoints) utilizando o Dockerfile próprio:
+```bash
+cd frontend
+docker build -t healthgo-frontend .
+docker run -p 3000:3000 healthgo-frontend
+```
+O Frontend estará disponível em `http://localhost:3000`.
+
 ## Testes
 Para rodar os testes unitários e de integração (Happy-path, Idempotência, Agregação):
 ```bash
 go test ./internal/...
 ```
 
-## Endpoints e Exemplos (httpie)
+## Endpoints e Exemplos (curl)
 
 ### 1. Enviar Medições (POST)
 ```bash
-http POST :8080/v1/measurements << '[
+curl -X POST http://localhost:8080/v1/measurements \
+  -H "Content-Type: application/json" \
+  -d '[
   {
     "device_id": "dev01",
     "timestamp": "2024-05-03T12:00:00Z",
@@ -43,25 +56,25 @@ http POST :8080/v1/measurements << '[
 ### 2. Consultar Série Temporal (GET)
 Retorna a média por minuto.
 ```bash
-http ":8080/v1/devices/dev01/series?gas=H2&start=2024-05-03T11:00:00Z&end=2024-05-03T13:00:00Z"
+curl "http://localhost:8080/v1/devices/dev01/series?gas=H2&start=2024-05-03T11:00:00Z&end=2024-05-03T13:00:00Z"
 ```
 
 ### 3. Consultar Saúde do Dispositivo (GET)
 ```bash
-http :8080/v1/devices/dev01/health
+curl http://localhost:8080/v1/devices/dev01/health
 ```
 
 ### 4. Saúde do Sistema (Healthcheck)
 ```bash
-http :8080/healthz
-http :8080/readyz
+curl http://localhost:8080/healthz
+curl http://localhost:8080/readyz
 ```
 
 ## Decisões Técnicas e Trade-offs
 
 ### 1. Observabilidade: Logs Estruturados e Métricas "Push-based" simplificadas
 Implementei logs estruturados em formato JSON utilizando a biblioteca padrão `log/slog`. Para métricas, em vez de configurar um servidor Prometheus completo (que adicionaria complexidade de infraestrutura), optei por um log periódico de métricas de negócio (ex: total de medições em memória).
-- **Motivo:** Facilita a integração com agregadores de log como ELK ou Datadog e resolve o requisito de observabilidade sem dependências externas pesadas.
+- **Motivo:** Facilita a integração com agregadores de log como ELK ou Datadog e resolve o requisito de observabilidade sem dependências externas.
 
 ### 2. Validação Rigorosa no Handler
 Adicionei validações explícitas no `MeasurementHandler` para rejeitar:
