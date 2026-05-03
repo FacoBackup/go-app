@@ -1,4 +1,4 @@
-# HealthGo Backend
+# Parte 1
 
 Este serviço é responsável por receber e processar dados de telemetria de gases (H2, CH4, H2S) provenientes de dispositivos médicos.
 
@@ -40,17 +40,7 @@ go test ./internal/...
 
 ### 1. Enviar Medições (POST)
 ```bash
-curl -X POST http://localhost:8080/v1/measurements \
-  -H "Content-Type: application/json" \
-  -d '[
-  {
-    "device_id": "dev01",
-    "timestamp": "2024-05-03T12:00:00Z",
-    "gas": "H2",
-    "value_ppm": 15.5,
-    "patient_ref": "user123"
-  }
-]'
+curl -X POST http://localhost:8080/v1/measurements -H "Content-Type: application/json" -d '[{"device_id": "dev01","timestamp": "2024-05-03T12:00:00Z","gas": "H2","value_ppm": 15.5,"patient_ref": "user123"}]'
 ```
 
 ### 2. Consultar Série Temporal (GET)
@@ -94,5 +84,11 @@ O armazenamento é feito em um `InMemoryRepository` utilizando:
 - `sync.RWMutex`: Para garantir thread-safety em acessos concorrentes.
 
 ## Trade-offs anteriores mantidos:
-- **Agregação em leitura:** Para volumes moderados, a agregação on-the-fly simplifica o sistema. Para escala maciça, usaríamos um banco de séries temporais.
 - **CORS Permissivo:** Configurado para aceitar todas as origens para facilitar o teste entre containers Docker (Frontend <-> Backend).
+- "Persistência" em memória por fins de simplicidade
+- Log simplista
+
+
+----
+
+# Parte 2
