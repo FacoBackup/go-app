@@ -2,8 +2,8 @@ package handler
 
 import (
 	"encoding/json"
-	"healthgo/backend/internal/domain"
-	"healthgo/backend/internal/service"
+	"healthgo/backend/domain"
+	"healthgo/backend/service"
 	"log/slog"
 	"net/http"
 	"time"
@@ -102,4 +102,32 @@ func (h *MeasurementHandler) GetHealth(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(health)
+}
+
+// Estrutura adicional para operações no frontend
+func (h *MeasurementHandler) GetDevices(w http.ResponseWriter, r *http.Request) {
+	devices, err := h.service.GetDevices()
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(devices)
+}
+
+// Estrutura adicional para operações no frontend
+func (h *MeasurementHandler) DeleteDevice(w http.ResponseWriter, r *http.Request) {
+	deviceID := r.PathValue("device_id")
+	if deviceID == "" {
+		http.Error(w, "Missing device_id", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.service.DeleteDevice(deviceID); err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

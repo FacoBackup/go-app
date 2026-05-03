@@ -1,9 +1,9 @@
 package main
 
 import (
-	"healthgo/backend/internal/handler"
-	"healthgo/backend/internal/repository"
-	"healthgo/backend/internal/service"
+	"healthgo/backend/handler"
+	"healthgo/backend/repository"
+	"healthgo/backend/service"
 	"log/slog"
 	"net/http"
 	"os"
@@ -36,8 +36,10 @@ func main() {
 	}
 
 	mux.HandleFunc("POST /v1/measurements", h.PostMeasurements)
+	mux.HandleFunc("GET /v1/devices", h.GetDevices)
 	mux.HandleFunc("GET /v1/devices/{device_id}/series", h.GetSeries)
 	mux.HandleFunc("GET /v1/devices/{device_id}/health", h.GetHealth)
+	mux.HandleFunc("DELETE /v1/devices/{device_id}", h.DeleteDevice)
 
 	// Endpoints de saúde
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {

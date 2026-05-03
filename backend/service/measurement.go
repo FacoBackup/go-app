@@ -1,8 +1,8 @@
 package service
 
 import (
-	"healthgo/backend/internal/domain"
-	"healthgo/backend/internal/repository"
+	"healthgo/backend/domain"
+	"healthgo/backend/repository"
 	"maps"
 	"slices"
 	"time"
@@ -86,4 +86,14 @@ func (s *MeasurementService) GetDeviceHealth(deviceID string) (*domain.DeviceHea
 	}
 
 	return health, nil
+}
+
+// Estrutura adicional para operações no frontend
+func (s *MeasurementService) GetDevices() ([]string, error) {
+	return s.repo.GetDevices()
+}
+
+// Estrutura adicional para operações no frontend
+func (s *MeasurementService) DeleteDevice(deviceID string) error {
+	return s.repo.DeleteDevice(deviceID)
 }

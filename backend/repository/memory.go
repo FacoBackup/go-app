@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"healthgo/backend/internal/domain"
+	"healthgo/backend/domain"
 	"sync"
 	"time"
 )
@@ -11,6 +11,10 @@ type MeasurementRepository interface {
 	GetSeries(deviceID string, gas domain.GasType, start, end time.Time) ([]domain.Measurement, error)
 	GetLastMeasurement(deviceID string) (*domain.Measurement, error)
 	GetMeasurementsCount(deviceID string, start, end time.Time) (int, error)
+	// Estrutura adicional para operações no frontend
+	GetDevices() ([]string, error)
+	// Estrutura adicional para operações no frontend
+	DeleteDevice(deviceID string) error
 }
 
 type InMemoryRepository struct {
@@ -82,4 +86,40 @@ func (r *InMemoryRepository) GetMeasurementsCount(deviceID string, start, end ti
 		}
 	}
 	return count, nil
+}
+
+// Estrutura adicional para operações no frontend
+func (r *InMemoryRepository) GetDevices() ([]string, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	devices := make(map[string]bool)
+	for _, m := range r.measurements {
+		devices[m.DeviceID] = true
+	}
+
+	result := make([]string, 0, len(devices))
+	for id := range devices {
+		result = append(result, id)
+	}
+	return result, nil
+}
+
+// Estrutura adicional para operações no frontend
+func (r *InMemoryRepository) DeleteDevice(deviceID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	newMeasurements := make([]domain.Measurement, 0)
+	for _, m := range r.measurements {
+		if m.DeviceID != deviceID {
+			newMeasurements = append(newMeasurements, m)
+		} else {
+			// Remove from dedup
+			key := m.DeviceID + m.Timestamp.Format(time.RFC3339) + string(m.Gas)
+			delete(r.dedup, key)
+		}
+	}
+	r.measurements = newMeasurements
+	return nil
 }

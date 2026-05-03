@@ -1,8 +1,8 @@
 package service
 
 import (
-	"healthgo/backend/internal/domain"
-	"healthgo/backend/internal/repository"
+	"healthgo/backend/domain"
+	"healthgo/backend/repository"
 	"testing"
 	"time"
 )

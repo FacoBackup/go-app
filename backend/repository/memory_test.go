@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"healthgo/backend/internal/domain"
+	"healthgo/backend/domain"
 	"testing"
 	"time"
 )

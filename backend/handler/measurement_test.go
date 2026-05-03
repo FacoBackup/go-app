@@ -3,9 +3,9 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
-	"healthgo/backend/internal/domain"
-	"healthgo/backend/internal/repository"
-	"healthgo/backend/internal/service"
+	"healthgo/backend/domain"
+	"healthgo/backend/repository"
+	"healthgo/backend/service"
 	"net/http"
 	"net/http/httptest"
 	"testing"
